@@ -1,0 +1,39 @@
+services:
+  # 1. Database PostgreSQL 
+  postgres_db:
+    image: postgres:15-alpine
+    container_name: iae_postgres_katalog
+    restart: always
+    environment:
+      POSTGRES_USER: postgresuser
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: db_katalog
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # 2. Hasura GraphQL Engine yang otomatis connect ke PostgreSQL 
+  hasura_engine:
+    image: hasura/graphql-engine:v2.38.0
+    container_name: iae_hasura_katalog
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres_db
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgresuser:postgrespassword@postgres_db:5432/db_katalog
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_ADMIN_SECRET: rahasiahasura
+
+  # 3. Message Broker (Redis) untuk komunikasi antar service 
+  message_broker:
+    image: redis:7-alpine
+    container_name: iae_redis_broker
+    restart: always
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata:
